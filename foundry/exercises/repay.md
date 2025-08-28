@@ -10,17 +10,23 @@ Solution is provided in `foundry/src/solutions/Repay.sol`
 
 ```solidity
 function repay(address token) public returns (uint256) {
-    // Task 1.1
-    // msg.sender will pay for the interest on borrow.
-    // Transfer the difference (debt - balance in this contract)
+    uint256 balance = IERC20(token).balanceOf(address(this));
+    uint256 debt = getVariableDebt(token);
 
-    // Task 1.2 - Approve the pool contract to transfer debt from this contract
+    if (debt > balance) {
+        IERC20(token).transferFrom(msg.sender, addrees(this), debt - balance);
+    }
 
-    // Task 1.3 - Repay all the debt to Aave V3
-    // All the debt can be repaid by setting the amount to repay to a number
-    // greater than or equal to the current debt
+    IERC20(token).approve(address(pool), debt);
 
-    // Task 1.4 - Return the amount that was repaid
+    uint256 repaid = pool.repay({
+        asset: token,
+        amount: type(uint256).max,
+        interestRateMode: 2,
+        onBehalfOf: address(this)
+    });
+
+    return repaid;
 }
 ```
 
