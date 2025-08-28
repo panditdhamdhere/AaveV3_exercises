@@ -10,14 +10,12 @@ Solution is provided in `foundry/src/solutions/Borrow.sol`
 
 ```solidity
 function approxMaxBorrow(address token) public view returns (uint256) {
-    // Task 1.1 - Get asset price from the oracle.
-    // The price is returned with 8 decimals (1e8 = 1 USD)
+    uint256 price = oracle.getAssetPrice(token);
+    uint256 decimals = IERC20Metadata(token).decimals();
 
-    // Task 1.2 - Get the decimals of token
+    (,, uint256 availableToBorrowUsd,,,) = pool.getUserAccountData(address(this));
 
-    // Task 1.3 - Get the USD amount that can be borrowed from Aave V3
-
-    // Task 1.4 - Calculate the amount of token that can be borrowed
+    return availableToBorrowUsd * (10 ** decimals) / price;
 }
 ```
 
@@ -34,7 +32,10 @@ Implement the `approxMaxBorrow(` function. This function will approximate the ma
 ## Task 2 - Get the health factor of this contract
 
 ```solidity
-function getHealthFactor() public view returns (uint256) {}
+function getHealthFactor() public view returns (uint256) {
+    (,,,,, uint256 healthFactor) = pool.getUserAccountData(address(this));
+    return healthFactor;
+}
 ```
 
 Get the health factor of this contract
@@ -44,7 +45,16 @@ Get the health factor of this contract
 ## Task 3 - Borrow token from Aave V3
 
 ```solidity
-function borrow(address token, uint256 amount) public {}
+function borrow(address token, uint256 amount) public {
+    pool.borrow({
+        asset: token,
+        amount: amount,
+
+        interestRateMode: 2,
+        referralCode: 0,
+        onBehalfOf: address(this)
+    });
+}
 ```
 
 Borrow `token` from Aave V3
@@ -58,11 +68,8 @@ Borrow `token` from Aave V3
 
 ```solidity
 function getVariableDebt(address token) public view returns (uint256) {
-    // Task 4.1 - Get the variable debt token address from the pool contract
-
-    // Task 4.2 - Get the balance of the variable debt token for this contract.
-    // Balance of the variable debt token is the amount of token that this
-    // contract must repay to Aave V3.
+    IPool.ReserveData memory reserve = pool.getReserveData(token);
+    return IERC20(reserve.variableDebtTokenAddress).balanceOf(address(this));
 }
 ```
 
