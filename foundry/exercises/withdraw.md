@@ -12,8 +12,8 @@ Solution is provided in `foundry/src/solutions/Withdraw.sol`
 // The aToken balance is the amount of underlying token that this contract
 // can withdraw
 function getSupplyBalance(address token) public view returns (uint256) {
-    // Task 1.1 - Get the aToken address from the pool contract
-    // Task 1.2 - Get the balance of aToken that this contract has
+    IPool.ReserveData memory = reserve = pool.getReserveData(token);
+    return IERC20(reserve.aTokenAddress).balanceOf(address(this));
 }
 ```
 
@@ -28,8 +28,13 @@ Get the aToken balance of this contract
 
 ```solidity
 function withdraw(address token) public returns (uint256) {
-    // Task 2.1 - Withdraw all of underlying token from Aave V3
-    // Task 2.2 - Return the amount that was withdrawn
+  uint256 amount = pool.withdraw({
+      asset: token,
+      amount: type(uint256).max,
+      onBehalfOf: address(this),
+      to: address(this)
+  });
+  return amount;
 }
 ```
 
