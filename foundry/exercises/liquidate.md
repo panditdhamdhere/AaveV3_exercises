@@ -12,13 +12,18 @@ Solution is provided in `foundry/src/solutions/Liquidate.sol`
 function liquidate(address collateral, address borrowedToken, address user)
     public
 {
-    // Task 1.1 - Get the amount of borrowed token that the user owes to Aave V3
+ IPool.reserveData memory reserve = pool.getReserveData(borrowedToken);
+ uint256 debt = IERC20(reserve.debtTokenAddress).balanceOf(user);
 
-    // Task 1.2 - Transfer the full borrowed amount from msg.sender
+ IERC20(borrowedToken).transferFrom(msg.sender, address(this), debt);
 
-    // Task 1.3 - Approve the pool contract to spend borrowed token from this contract
-
-    // Task 1.4 - Call liquidate
+ pool.liquidationCall({
+    collateralAsset: collateral,
+    debtAsset: borrowedToken,
+    user: user,
+    debtToCover: debt,
+    receiveAToken: false
+ })
 }
 ```
 
