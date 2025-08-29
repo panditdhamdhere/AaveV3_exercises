@@ -9,18 +9,17 @@ Solution is provided in `foundry/src/solutions/Flash.sol`
 ## Task 1 - Initiate flash loan
 
 ```solidity
-function flash(address token, uint256 amount) public {}
+function flash(address token, uint256 amount) public {
+    pool.flashLoanSimple({
+        receiverAddress: address(this),
+            asset: token,
+            amount: amount,
+            params: abi.encode(msg.sender),
+            referralCode: 0
+
+    })
+}
 ```
-
-Initiate the flash loan
-
-- `token` is the token to borrow
-- `amount` is the amount to borrow
-
-> Hints
->
-> - Call `pool.flashLoanSimple`
-> - ABI encode `msg.sender` and pass it as input to `params`
 
 ## Task 2 - Repay flash loan
 
@@ -32,16 +31,15 @@ function executeOperation(
     address initiator,
     bytes calldata params
 ) public returns (bool) {
-    // Task 2.1 - Check that msg.sender is the pool contract
+    require(msg.sender == address(pool), "not authorized");
+        require(initiator == address(this), "invalid initiator");
 
-    // Task 2.2 - Check that initiator is this contract
+        address caller = abi.decode(params, (address));
+        IERC20(asset).transferFrom(caller, address(this), fee);
 
-    // Task 2.3 - Decode caller from params and transfer
-    // flash loan fee from this caller
+        IERC20(asset).approve(msg.sender, amount + fee);
 
-    // Task 2.4 - Approve the pool to spend flash loaned amount + fee
-
-    // Task 2.5 - Return true
+        return true;
 }
 ```
 
